@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-
+import { Form, FormGroup, Label, Input, Button } from "reactstrap";
 class FormVaper extends Component {
 	constructor(props) {
 		super(props);
@@ -43,31 +43,29 @@ class FormVaper extends Component {
 	}
 	render() {
 		return (
-			<form onSubmit={this.handleSubmit}>
-				<div className="form-group">
-					<label>Nombre: </label>
-					<input
+			<Form onSubmit={this.handleSubmit}>
+				<FormGroup>
+					<Label>Nombre: </Label>
+					<Input
 						className="form-control"
 						type="text"
 						onChange={this.handleChangeName}
 						value={this.state.name}
 					/>
-				</div>
-				<div className="form-group">
-					<label>Description: </label>
-					<input
+				</FormGroup>
+				<FormGroup>
+					<Label>Description: </Label>
+					<Input
 						type="text"
 						className="form-control"
 						onChange={this.handleChangeDescription}
 						value={this.state.description}
 					/>
-				</div>
-				<input
-					type="submit"
-					className="btn btn-success"
-					value="enviar"
-				/>
-			</form>
+				</FormGroup>
+				<Button type="submit" color="success">
+					enviar
+				</Button>
+			</Form>
 		);
 	}
 }

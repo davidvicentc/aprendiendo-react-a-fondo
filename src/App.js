@@ -1,70 +1,54 @@
 import React from "react";
 import Vaper from "./components/Vaper.js";
 import FormVaper from "./components/AddVaper/FormAddVape.js";
-import config from "./config/firebase";
-import firebase from "firebase/app";
+import db from "./config/firebase";
+
+//reactstrap
+
+import { Container, Row, Jumbotron } from "reactstrap";
+
+// />
 import "firebase/firestore";
 class App extends React.Component {
 	constructor(props) {
 		super(props);
-		firebase.initializeApp(config);
 		this.state = {
-			vapers: []
+			vapers: [],
+			edit: false,
+			editVape: {}
 		};
 
 		this.NewVape = this.NewVape.bind(this);
 	}
 
 	NewVape(name, description) {
-		firebase
-			.firestore()
-			.collection("vapers")
+		db.collection("vapers")
 			.add({
 				name,
 				description
 			})
-			.then(docRef => {})
+			.then(docRef => console.log("agregado"))
 			.catch(e => console.log(e));
-		this.setState({
-			vapers: [...this.state.vapers, { name, description }]
-		});
 	}
 	componentDidMount() {
-		// firebase
-		// 	.firestore()
-		// 	.collection("vapers")
-		// 	.add({
-		// 		name: "eleaf",
-		// 		description: "mi primer vape"
-		// 	})
-		// 	.then(docRef => {
-		// 		console.log(docRef);
-		// 	})
-		// 	.catch(e => console.log(e));
 		this.getData();
 	}
 	getData = () => {
-		let vapers = [];
-		firebase
-			.firestore()
-			.collection("vapers")
-			.get()
-			.then(querySnapshot => {
-				querySnapshot.forEach(doc => {
-					vapers.push({
+		db.collection("vapers").onSnapshot(querySnapshot => {
+			this.setState({
+				vapers: querySnapshot.docs.map(doc => {
+					return {
 						id: doc.id,
 						name: doc.data().name,
 						description: doc.data().description
-					});
-				});
-				this.setState({ vapers });
+					};
+				})
 			});
+		});
 	};
 
 	deleteVaper(e) {
-		firebase
-			.firestore()
-			.collection("vapers")
+		db.collection("vapers")
 			.doc(e.target.value)
 			.delete()
 			.then(function() {
@@ -74,12 +58,32 @@ class App extends React.Component {
 				console.log("eliminado correctamente");
 			});
 	}
+	editVaper = id => {
+		let docRef = db.collection("vapers").doc(id);
+
+		docRef.get().then(doc => {
+			this.setState({
+				editVape: {
+					name: doc.data().name,
+					description: doc.data().description,
+					id: doc.id
+				}
+			});
+		});
+	};
 	render() {
 		return (
-			<div className="container">
-				<FormVaper newDataVape={this.NewVape} />
+			<Container>
+				<Jumbotron className="text-center">
+					<h1>Product vape app.</h1>
+					<p>Aprendiendo ReactJS a fondo.</p>
+				</Jumbotron>
+				<FormVaper
+					newDataVape={this.NewVape}
+					editVapeData={this.state.editVape}
+				/>
 				<h1>Primer componente</h1>
-				<div className="row">
+				<Row>
 					{this.state.vapers.length === 0 ? (
 						<p className="mx-auto">
 							lo sentimos, no hay productos disponibles
@@ -90,12 +94,13 @@ class App extends React.Component {
 								<Vaper
 									vaper={vaper}
 									deleteVaper={this.deleteVaper}
+									editVaper={this.editVaper}
 								/>
 							</div>
 						))
 					)}
-				</div>
-			</div>
+				</Row>
+			</Container>
 		);
 	}
 }
