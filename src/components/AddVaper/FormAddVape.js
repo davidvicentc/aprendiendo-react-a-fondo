@@ -1,30 +1,52 @@
 import React, { Component } from "react";
 import { Form, FormGroup, Label, Input, Button } from "reactstrap";
+// import db from "../../config/firebase";
 class FormVaper extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
 			name: "",
-			description: ""
+			description: "",
+			id: ""
 		};
 		this.handleChangeName = this.handleChangeName.bind(this);
 		this.handleChangeDescription = this.handleChangeDescription.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 	handleChangeName(e) {
-		// this.setState({
-		// 	vaper: {
-		// 		name: e.target.value
-		// 	}
-		// });
 		this.setState({ name: e.target.value });
 	}
+	static getDerivedStateFromProps(nextProps, prevState) {
+		if (nextProps.editVaperData.id) {
+			// let docRef = db.collection("vapers").doc(props.idEdit);
+			// docRef.get().then(doc => {
+			// 	// this.setState({
+			// 	// 	name: doc.data().name,
+			// 	// 	description: doc.data().description
+			// 	// });
+			// 	console.log(doc.data());
+
+			// });
+			// if (state.id) {
+			// 	return null;
+			// }
+			if (nextProps.editVaperData.id !== prevState.id) {
+				return {
+					id: nextProps.editVaperData.id,
+					name: nextProps.editVaperData.name,
+					description: nextProps.editVaperData.description
+				};
+			}
+
+			// return {
+			// 	id: nextProps.editVaperData.id,
+			// 	name: nextProps.editVaperData.name,
+			// 	description: nextProps.editVaperData.description
+			// };
+		}
+		return null;
+	}
 	handleChangeDescription(e) {
-		// this.setState({
-		// 	vaper: {
-		// 		description: e.target.value
-		// 	}
-		// });
 		this.setState({ description: e.target.value });
 	}
 	handleSubmit(e) {
@@ -38,8 +60,21 @@ class FormVaper extends Component {
 		if (this.state.description === "") {
 			return alert("debes colocar una description");
 		}
-		this.props.newDataVape(this.state.name, this.state.description);
-		this.setState({ name: "", description: "" });
+		if (this.props.isEdit) {
+			this.props.newDataVape(
+				this.state.name,
+				this.state.description,
+				this.state.id
+			);
+			this.setState({ name: "", description: "" });
+		} else {
+			this.props.newDataVape(
+				this.state.name,
+				this.state.description,
+				this.state.id
+			);
+			this.setState({ name: "", description: "" });
+		}
 	}
 	render() {
 		return (
@@ -63,7 +98,7 @@ class FormVaper extends Component {
 					/>
 				</FormGroup>
 				<Button type="submit" color="success">
-					enviar
+					{this.props.isEdit ? "Actualizar" : "guardar"}
 				</Button>
 			</Form>
 		);

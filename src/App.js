@@ -2,13 +2,16 @@ import React from "react";
 import Vaper from "./components/Vaper.js";
 import FormVaper from "./components/AddVaper/FormAddVape.js";
 import db from "./config/firebase";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 
 //reactstrap
 
 import { Container, Row, Jumbotron } from "reactstrap";
 
 // />
-import "firebase/firestore";
+
+const MySwal = withReactContent(Swal);
 class App extends React.Component {
 	constructor(props) {
 		super(props);
@@ -18,17 +21,55 @@ class App extends React.Component {
 			editVape: {}
 		};
 
-		this.NewVape = this.NewVape.bind(this);
+		this.action = this.action.bind(this);
 	}
 
-	NewVape(name, description) {
-		db.collection("vapers")
-			.add({
-				name,
-				description
-			})
-			.then(docRef => console.log("agregado"))
-			.catch(e => console.log(e));
+	action(name, description, id) {
+		if (this.state.edit) {
+			MySwal.fire({
+				title: "¿Estas seguro que desea actualizar?",
+				text:
+					"Luego de presionar ok, sus antiguos datos se remplazaran con los nuevo.!",
+				type: "success",
+				showCancelButton: true,
+				confirmButtonColor: "#3085d6",
+				cancelButtonColor: "#d33",
+				confirmButtonText: "Si, actualizar!"
+			}).then(result => {
+				if (result.value) {
+					db.collection("vapers")
+						.doc(id)
+						.update({
+							name,
+							description
+						})
+						.then(() =>
+							this.setState({ edit: false, editVape: {} })
+						);
+					MySwal.fire(
+						"Actualizado!",
+						"Tu producto ha sido actualizado correctamente",
+						"success"
+					);
+				}
+			});
+		} else {
+			MySwal.fire({
+				title: "Creado correctamente!!!",
+				type: "success",
+				showConfirmButton: false,
+				confirmButtonColor: "#3085d6",
+				timer: 1000
+			}).then(() => {
+				db.collection("vapers")
+					.add({
+						name,
+						description
+					})
+					.then(docRef => console.log("agregado"))
+					.catch(e => console.log(e));
+			});
+		}
 	}
 	componentDidMount() {
 		this.getData();
@@ -47,16 +88,35 @@ class App extends React.Component {
 		});
 	};
 
-	deleteVaper(e) {
-		db.collection("vapers")
-			.doc(e.target.value)
-			.delete()
-			.then(function() {
-				console.log("eliminado");
-			})
-			.catch(e => {
-				console.log("eliminado correctamente");
-			});
+	deleteVaper(vaper) {
+		MySwal.fire({
+			title: `¿Estas seguro que desea Eliminar: ${vaper.name}?`,
+			text:
+				"Luego de presionar ok, se eliminara el registro del producto",
+			type: "success",
+			showCancelButton: true,
+			confirmButtonColor: "#3085d6",
+			cancelButtonColor: "#d33",
+			confirmButtonText: "Si, eliminar!",
+			cancelButtonText: "cancelar"
+		}).then(result => {
+			if (result.value) {
+				db.collection("vapers")
+					.doc(vaper.id)
+					.delete()
+					.then(function() {
+						console.log("eliminado");
+					})
+					.catch(e => {
+						console.log("eliminado correctamente");
+					});
+				MySwal.fire(
+					"Eliminado!",
+					"Tu producto ha sido eliminado correctamente",
+					"success"
+				);
+			}
+		});
 	}
 	editVaper = id => {
 		let docRef = db.collection("vapers").doc(id);
@@ -67,7 +127,8 @@ class App extends React.Component {
 					name: doc.data().name,
 					description: doc.data().description,
 					id: doc.id
-				}
+				},
+				edit: true
 			});
 		});
 	};
@@ -79,8 +140,9 @@ class App extends React.Component {
 					<p>Aprendiendo ReactJS a fondo.</p>
 				</Jumbotron>
 				<FormVaper
-					newDataVape={this.NewVape}
-					editVapeData={this.state.editVape}
+					newDataVape={this.action}
+					editVaperData={this.state.editVape}
+					isEdit={this.state.edit}
 				/>
 				<h1>Primer componente</h1>
 				<Row>
@@ -89,14 +151,13 @@ class App extends React.Component {
 							lo sentimos, no hay productos disponibles
 						</p>
 					) : (
-						this.state.vapers.reverse().map(vaper => (
-							<div className="col-md-4" key={vaper.id}>
-								<Vaper
-									vaper={vaper}
-									deleteVaper={this.deleteVaper}
-									editVaper={this.editVaper}
-								/>
-							</div>
+						this.state.vapers.map(vaper => (
+							<Vaper
+								key={vaper.id}
+								vaper={vaper}
+								deleteVaper={this.deleteVaper}
+								editVaper={this.editVaper}
+							/>
 						))
 					)}
 				</Row>
